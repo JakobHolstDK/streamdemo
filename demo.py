@@ -39,7 +39,7 @@ while running:
         sincount = int(numpy.sin(number) * 30)
         print(sincount)
         rotated_image = pygame.transform.rotate(image,sincount ) 
-        screen.blit(rotated_image, (0, 100))
+        screen.blit(rotated_image, (100, 100))
         pygame.display.flip()
         genimage(str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")), textsize)
         add=random.randint(0,10)/10
