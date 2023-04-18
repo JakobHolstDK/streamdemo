@@ -55,8 +55,9 @@ def genpostit(mytext, myangle, mysize, filename):
 
 def genmasterimage(imagename, x, y):
     bgimage = Image.open("wedding.jpg")
+    oldpaper = Image.open("old-paper.jpg")
     redis_client.keys
-   # Image.Image.paste(image, bgimage, (0, 0))
+    Image.Image.paste(bgimage, oldpaper, (600, 200))
     for key in redis_client.scan_iter("*"):
       postitid = key.decode()
       myplacement = redis_client.hget(postitid, 'placement')
@@ -73,6 +74,6 @@ def genmasterimage(imagename, x, y):
       Image.Image.paste(bgimage, myimage, (myx, myy))
     bgimage.save(imagename)
 
-genmasterimage("masterimage.png", 3840, 1080)
+genmasterimage("masterimage.png", 1900, 1080)
 showimage("masterimage.png")
 time.sleep(10)

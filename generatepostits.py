@@ -12,8 +12,8 @@ import uuid
 
 redis_client = redis.Redis(host='localhost', port=6379, db=0)
 # List of possible statements
-
-myscreen = { "x": 2560, "y": 720, "right": 30, "left": 30 , "up": 90, "down": 90 , "fontsize": 40 }
+myenv ={ "tmp": "./tmp", "images": "./images" }
+myscreen = { "x": 1900, "y": 1020, "right": 30, "left": 30 , "up": 90, "down": 90 , "fontsize": 40 }
 
 placements = [
     "right",
@@ -22,18 +22,12 @@ placements = [
 person = {}
 person['left'] = [
     "she",
-    "Mary",
-    "My sister",
-    "My mother",
-    "My aunt"
+    "Mary"
     ]
 
 person['right'] = [
     "he",
-    "Peter",
-    "My Brother",
-    "My father",
-    "My Cousin"
+    "Peter"
     ]
 
 
@@ -78,11 +72,11 @@ def createpostit():
     epoch_time = time.time()
     epoch_time_ns = int(epoch_time * 1e9)
     postitid = str(epoch_time_ns).zfill(19)
-    unique_filename = 'postit_' + unique_id + '.jpg'
+    unique_filename = myenv['tmp'] + '/' + 'postit_' + unique_id + '.jpg'
     mystatement = generatestatment()
     myrx = randomplace(mystatement['place'])
     myry = randomplace('up')
-    bgimage = Image.open("postit.jpg")
+    bgimage = Image.open(myenv['images'] + "/postit.jpg")
     draw = ImageDraw.Draw(bgimage)
     font = ImageFont.truetype("arial.ttf", size=myscreen["fontsize"])
     text = mystatement['statement']
@@ -92,11 +86,11 @@ def createpostit():
     draw.text((x, y), text, font=font, fill=(5, 44, 2))
     bgimage = bgimage.resize((200, 200))
     bgimage.save(unique_filename)
-    redis_client.hset(postitid, 'placement', mystatement["place"])
-    redis_client.hset(postitid, 'filename', unique_filename)
-    redis_client.hset(postitid, 'statement', text)
-    redis_client.hset(postitid, 'x', myrx)
-    redis_client.hset(postitid, 'y', myry)
+    redis_client.hset("statement:" + postitid, 'placement', mystatement["place"])
+    redis_client.hset("statement:" + postitid, 'filename', unique_filename)
+    redis_client.hset("statement:" + postitid, 'statement', text)
+    redis_client.hset("statement:" + postitid, 'x', myrx)
+    redis_client.hset("statement:" + postitid, 'y', myry)
 
 
 def randomplace(place):
@@ -121,7 +115,7 @@ def randomplace(place):
 def randangle():
     randomangle = int(random.randrange(90))
     return randomangle
-iterations = 30
+iterations = 10
 while iterations > 0:
   createpostit()
   iterations = iterations - 1
