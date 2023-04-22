@@ -54,11 +54,15 @@ def genpostit(mytext, myangle, mysize, filename):
 
 
 def genmasterimage(imagename, x, y):
-    bgimage = Image.open("wedding.jpg")
-    oldpaper = Image.open("old-paper.jpg")
+    bgimage = Image.open("images/wedding.png")
+    speechfilename = redis_client.get("speechfile")
+    print(speechfilename.decode())
+    #speechfilename = speechfilename.decode()
+    oldpaper = Image.open(speechfilename)
     redis_client.keys
-    Image.Image.paste(bgimage, oldpaper, (600, 200))
-    for key in redis_client.scan_iter("*"):
+    Image.Image.paste(bgimage, oldpaper, (800, 200))
+    for key in redis_client.scan_iter("statement:*"):
+      print(key.decode())
       postitid = key.decode()
       myplacement = redis_client.hget(postitid, 'placement')
       myplacement = myplacement.decode()
@@ -71,9 +75,17 @@ def genmasterimage(imagename, x, y):
       myy = redis_client.hget(postitid, 'y')
       myy = int(myy.decode())
       myimage = Image.open(myfilename)
-      Image.Image.paste(bgimage, myimage, (myx, myy))
+      myimage_copy = myimage.copy().convert('RGBA')
+      for x in range(myimage_copy.width):
+       for y in range(myimage_copy.height):
+        r, g, b, a = myimage_copy.getpixel((x, y))
+        if (r, g, b) == (255, 255, 255):
+            myimage_copy.putpixel((x, y), (r, g, b, 0))
+      if bgimage.mode != 'RGBA':
+        bgimage = bgimage.convert('RGBA')
+      bgimage.alpha_composite(myimage_copy, dest=(myx, myy))
     bgimage.save(imagename)
 
-genmasterimage("masterimage.png", 1900, 1080)
+genmasterimage("masterimage.png", 2560, 1440)
 showimage("masterimage.png")
-time.sleep(10)
+time.sleep(4)

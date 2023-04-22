@@ -3,6 +3,33 @@
 import openai
 import redis
 import os
+from PIL import Image
+import pygame
+import datetime
+import time
+import random
+import numpy
+from PIL import Image, ImageDraw, ImageFont
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QLabel, QApplication
+import sys
+import redis
+import textwrap
+import math
+import uuid
+
+angle = 0
+width = 100
+myenv ={ "tmp": "./tmp", "images": "./images" }
+myscreen = { "x": 2560, "y": 1440, "right": 30, "left": 30 , "up": 90, "down": 90 , "fontsize": 20 }
+
+redis_client = redis.Redis(host='localhost', port=6379, db=0)
+
+
+
+
+
+
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -59,8 +86,47 @@ def createspeech( prompt ):
     presence_penalty=0.6,
     stop=[" Human:", " AI:"]
 )
-
   return(response['choices'][0]['text'])
+
+
+def savespeech(text, myfilename):
+  print(text)
+  print("---------------------------------------------------------")
+  bgimage = Image.open(myenv['images'] + "/old-paper.png")
+  text_image = Image.new("RGBA", (bgimage.width, bgimage.height), (0, 0, 0, 0))
+  draw = ImageDraw.Draw(text_image)
+  font = ImageFont.truetype("arial.ttf", size=myscreen["fontsize"])
+  wrapped_text = textwrap.wrap(text, width)
+  textplace=-100
+  for text in wrapped_text:
+    text_box = draw.textbbox((0, 0), text, font=font)
+    x = (bgimage.width - text_box[2]) // 2
+    y = (bgimage.height - text_box[3]) // 2
+    y = y + textplace
+    draw.text((x, y), text, font=font, fill=(5, 44, 2))
+    textplace += 60
+  rotated_text_image = text_image.rotate(angle, expand=True)
+  myimage_copy = rotated_text_image.copy().convert('RGBA')
+  for x in range(myimage_copy.width):
+    for y in range(myimage_copy.height):
+      r, g, b, a = myimage_copy.getpixel((x, y))
+      if (r, g, b) == (255, 255, 255):
+        myimage_copy.putpixel((x, y), (r, g, b, 0))
+  if bgimage.mode != 'RGBA':
+    bgimage = bgimage.convert('RGBA')
+  bgimage.alpha_composite(myimage_copy, dest=(-50, -100))
+  bgimage.save(myfilename)
+
 context =  createcontext()
+print(context)
 speech = createspeech(context)
+print(speech)
+
+unique_id = str(uuid.uuid4())
+unique_filename = myenv['tmp'] + '/' + 'speech_' + unique_id + '.png'
+savespeech(speech, unique_filename)
+
 redis_client.set("speech", speech)
+redis_client.set("speechfile", unique_filename)
+
+
